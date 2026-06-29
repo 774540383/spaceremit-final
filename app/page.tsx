@@ -11,26 +11,28 @@ export default function Home() {
         </div>
       </div>
 
-      {!publicKey && <p className="bad">تنبيه: ضع NEXT_PUBLIC_SPACEREMIT_PUBLIC_KEY في Vercel قبل التجربة.</p>}
+      {!publicKey && <p className="bad">تنبيه: المفتاح العام غير موجود في Vercel.</p>}
 
-      <form id="spaceremit-form">
-        <div className="field">
-          <label className="label">اسم العميل</label>
-          <input className="input" name="fullname" required placeholder="اكتب اسمك" />
-        </div>
+      <div className="field">
+        <label className="label">اسم العميل</label>
+        <input className="input" id="customerName" required placeholder="اكتب اسمك" />
+      </div>
 
-        <div className="field">
-          <label className="label">المبلغ بالدولار الأمريكي</label>
-          <input className="input" id="amountInput" name="amount" required type="number" min="1" step="0.01" placeholder="مثال: 10" />
-        </div>
+      <div className="field">
+        <label className="label">المبلغ بالدولار الأمريكي</label>
+        <input className="input" id="customerAmount" required type="number" min="1" step="0.01" placeholder="مثال: 1" />
+      </div>
 
+      <form id="spaceremit-form" style={{width:'100%'}}>
+        <input type="hidden" name="amount" id="sp_amount" value="1" />
         <input type="hidden" name="currency" value="USD" />
+        <input type="hidden" name="fullname" id="sp_fullname" value="Customer" />
         <input type="hidden" name="email" value="customer@example.com" />
         <input type="hidden" name="phone" value="0000000000" />
-        <input type="hidden" name="notes" id="notesInput" value="دفع من صفحة مستقلة" />
+        <input type="hidden" name="notes" value="دفع من صفحة مستقلة" />
 
         <div className="paybox">
-          <label>
+          <label htmlFor="sp_local_methods_radio">
             <input type="radio" name="sp-pay-type-radio" value="local-methods-pay" id="sp_local_methods_radio" defaultChecked />
             وسائل الدفع المحلية
           </label>
@@ -38,18 +40,18 @@ export default function Home() {
         </div>
 
         <div className="paybox">
-          <label>
+          <label htmlFor="sp_card_radio">
             <input type="radio" name="sp-pay-type-radio" value="card-pay" id="sp_card_radio" />
             الدفع بالبطاقة
           </label>
           <div id="spaceremit-card-pay"></div>
         </div>
 
-        <button className="btn" type="submit">ادفع الآن</button>
+        <button className="btn" type="submit" id="payBtn">ادفع الآن</button>
       </form>
 
       <p className="muted" style={{fontSize:13}}>
-        بعد الدفع سيتم التحقق تلقائيًا من Spaceremit ثم عرض نتيجة العملية.
+        جرّب أولًا مبلغ 1 دولار.
       </p>
     </section>
 
@@ -66,10 +68,20 @@ export default function Home() {
 
       let SP_FORM_AUTO_SUBMIT_WHEN_GET_CODE = true;
 
-      function SP_SUCCESSFUL_PAYMENT(spaceremit_code) {
+      document.addEventListener('DOMContentLoaded', function () {
         const form = document.querySelector('#spaceremit-form');
-        const name = encodeURIComponent(form.fullname.value || 'عميل');
-        const amount = encodeURIComponent(form.amount.value || '0');
+        form.addEventListener('submit', function () {
+          const name = document.querySelector('#customerName').value || 'Customer';
+          const amount = document.querySelector('#customerAmount').value || '1';
+
+          document.querySelector('#sp_fullname').value = name;
+          document.querySelector('#sp_amount').value = amount;
+        });
+      });
+
+      function SP_SUCCESSFUL_PAYMENT(spaceremit_code) {
+        const name = encodeURIComponent(document.querySelector('#customerName').value || 'Customer');
+        const amount = encodeURIComponent(document.querySelector('#customerAmount').value || '1');
 
         window.location.href =
           '/api/verify?payment_id=' +
